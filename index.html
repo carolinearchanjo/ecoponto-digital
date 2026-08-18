@@ -234,11 +234,17 @@
   async function carregarContadorGlobal() {
     try {
       const response = await fetch(WORKER_URL);
-      if (response.ok) {
-        const json = await response.json();
-        // Exibe o valor do contador retornado pela API
-        document.getElementById('counter').innerText = json.data.up_count ?? 0;
+      if (!response.ok) return;
+
+      let resData = await response.json();
+      
+      // Se o retorno vier como string codificada, converte para objeto
+      if (typeof resData === 'string') {
+        resData = JSON.parse(resData);
       }
+
+      const valorAtual = resData?.data?.up_count ?? resData?.data?.value ?? resData?.data?.up ?? 0;
+      document.getElementById('counter').innerText = valorAtual;
     } catch (err) {
       console.error("Erro ao carregar o contador:", err);
     }
@@ -251,17 +257,38 @@
   async function registrarDescarte() {
     try {
       const response = await fetch(`${WORKER_URL}/up`);
-      if (!response.ok) throw new Error("Erro na requisição");
+      if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
-      const json = await response.json();
-      
-      // 1. Atualiza o número na tela imediatamente
-      document.getElementById('counter').innerText = json.data.up_count;
-      
-      // 2. Aguarda 50ms para o navegador renderizar o novo número antes de abrir o alert
-      setTimeout(() => {
-        alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
-      }, 50);
+      let resData = await response.json();
+
+      // Tratamento caso a Worker devolva o JSON envelopado como texto
+      if (typeof resData === 'string') {
+        resData = JSON.parse(resData);
+      }
+
+      console.log("JSON processado com sucesso:", resData);
+
+      // Captura o valor incrementado retornado
+      const novoValor = resData?.data?.up_count ?? resData?.data?.value ?? resData?.data?.up;
+
+      if (novoValor !== undefined && novoValor !== null) {
+        // 1. Atualiza o texto imediatamente na tela
+        const el = document.getElementById('counter');
+        el.innerText = novoValor;
+        
+        // 2. Dispara o alert de confirmação
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+          }, 100);
+        });
+      } else {
+        // Fallback: se por algum motivo a API não mandar a contagem no retorno do /up, busca o contador atualizado
+        await carregarContadorGlobal();
+        setTimeout(() => {
+          alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+        }, 100);
+      }
 
     } catch (err) {
       console.error("Detalhes do erro:", err);
