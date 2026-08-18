@@ -247,24 +247,31 @@
 
   carregarContadorGlobal();
 
-  // 2. Registra o incremento e recarrega a página após o OK
+  // 2. Registra o incremento
   async function registrarDescarte() {
-    try {
-      // Dispara o incremento na API
-      const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
-      if (!response.ok) throw new Error("Erro na requisição ao servidor");
+  try {
+    const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
-      // Exibe a mensagem. Quando o usuário clicar em "OK", o script continua
-      alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+    let resData = await response.json();
+    if (typeof resData === 'string') resData = JSON.parse(resData);
 
-      // Força a recarga da página para puxar o valor atualizado da API
-      window.location.reload();
+    const novoValor = resData?.data?.up_count ?? resData?.data?.value;
 
-    } catch (err) {
-      console.error("Detalhes do erro:", err);
-      alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
+    if (novoValor !== undefined) {
+      // Atualiza o contador na tela imediatamente, sem reload
+      document.getElementById('counter').innerText = novoValor;
     }
+
+    alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+
+    // Removido o window.location.reload()
+
+  } catch (err) {
+    console.error("Detalhes do erro:", err);
+    alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
   }
+}
 </script>
 
 </body>
