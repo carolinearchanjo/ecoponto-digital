@@ -227,40 +227,40 @@
   </div>
 
   <script>
-  // Chave e namespace exclusivos do seu EcoPonto
-  const NAMESPACE = 'ecoponto-digital';
-  const KEY = 'descartes-totais';
+  // Insira a URL pública da sua Cloudflare Worker criada
+  const WORKER_URL = 'https://floral-mode-96bb.caroline-archanjo23.workers.dev/';
 
-  // 1. Ao carregar a página, busca o número TOTAL real acumulado de todas as pessoas no servidor
+  // 1. Busca a contagem atual ao abrir a página
   async function carregarContadorGlobal() {
     try {
-      const response = await fetch(`https://api.countapi.xyz/get/${NAMESPACE}/${KEY}`);
+      const response = await fetch(WORKER_URL);
       if (response.ok) {
-        const data = await response.json();
-        document.getElementById('counter').innerText = data.value;
-      } else {
-        // Se a chave ainda não existir na API, ela é criada com o primeiro acesso
-        await fetch(`https://api.countapi.xyz/create?namespace=${NAMESPACE}&key=${KEY}&value=0`);
+        const json = await response.json();
+        // A API retorna a contagem no campo up_count
+        document.getElementById('counter').innerText = json.data.up_count ?? 0;
       }
     } catch (err) {
-      console.log("Modo offline ou aguardando inicialização do servidor.");
+      console.error("Erro ao carregar o contador:", err);
     }
   }
 
-  // Execute a busca assim que a página abre
+  // Executa assim que a página carrega
   carregarContadorGlobal();
 
-  // 2. Quando a pessoa clica, envia o +1 para o servidor global e atualiza na tela de todos
+  // 2. Registra o incremento (+1) ao clicar no botão
   async function registrarDescarte() {
     try {
-      const response = await fetch(`https://api.countapi.xyz/hit/${NAMESPACE}/${KEY}`);
-      const data = await response.json();
+      const response = await fetch(`${WORKER_URL}/up`);
+      if (!response.ok) throw new Error("Erro na requisição");
+
+      const json = await response.json();
       
-      // Atualiza o número no celular do usuário com o novo total do banco de dados
-      document.getElementById('counter').innerText = data.value;
+      // Atualiza a tela com o valor retornado pela API
+      document.getElementById('counter').innerText = json.data.up_count;
       
       alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
     } catch (err) {
+      console.error(err);
       alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
     }
   }
