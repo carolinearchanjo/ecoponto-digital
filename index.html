@@ -248,31 +248,30 @@
 
   carregarContadorGlobal();
 
-  // 2. Registra o incremento
+// 2. Registra o incremento e atualiza a tela instantaneamente
   async function registrarDescarte() {
     const elCounter = document.getElementById('counter');
     const valorAtual = parseInt(elCounter.innerText) || 0;
 
     try {
-      // Faz o incremento real via Cloudflare Worker
       const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
       if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
       let resData = await response.json();
       if (typeof resData === 'string') resData = JSON.parse(resData);
 
-      // Atualiza na tela com o valor real confirmado pela API
-      const valorConfirmado = resData?.data?.up_count ?? resData?.data?.value;
+      // Obtém o valor confirmado retornado pela API
+      const valorConfirmado = resData?.data?.up_count ?? resData?.data?.value ?? (valorAtual + 1);
       
-      if (valorConfirmado !== undefined) {
-        elCounter.innerText = valorConfirmado;
-      } else {
-        elCounter.innerText = valorAtual + 1;
-      }
+      // 1. Escreve o valor novo no elemento HTML
+      elCounter.innerText = valorConfirmado;
 
-      setTimeout(() => {
-        alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
-      }, 50);
+      // 2. Força o navegador a pintar a tela antes de pausar a execução com o alert()
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+        });
+      });
 
     } catch (err) {
       console.error("Detalhes do erro:", err);
