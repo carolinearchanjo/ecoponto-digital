@@ -227,8 +227,8 @@
   </div>
 
   <script>
-  // Insira a URL pública da sua Cloudflare Worker criada
-  const WORKER_URL = 'https://floral-mode-96bb.caroline-archanjo23.workers.dev/';
+  // URL da Cloudflare Worker (sem a barra no final)
+  const WORKER_URL = 'https://floral-mode-96bb.caroline-archanjo23.workers.dev';
 
   // 1. Busca a contagem atual ao abrir a página
   async function carregarContadorGlobal() {
@@ -236,7 +236,7 @@
       const response = await fetch(WORKER_URL);
       if (response.ok) {
         const json = await response.json();
-        // A API retorna a contagem no campo up_count
+        // Exibe o valor do contador retornado pela API
         document.getElementById('counter').innerText = json.data.up_count ?? 0;
       }
     } catch (err) {
@@ -255,12 +255,12 @@
 
       const json = await response.json();
       
-      // Atualiza a tela com o valor retornado pela API
+      // Atualiza a tela com o novo valor retornado
       document.getElementById('counter').innerText = json.data.up_count;
       
       alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
     } catch (err) {
-      console.error(err);
+      console.error("Detalhes do erro:", err);
       alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
     }
   }
