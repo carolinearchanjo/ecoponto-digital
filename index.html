@@ -238,6 +238,7 @@
       let resData = await response.json();
       if (typeof resData === 'string') resData = JSON.parse(resData);
 
+      // Prioriza up_count (campo correto do acumulado na v2)
       const valorAtual = resData?.data?.up_count ?? resData?.data?.value ?? 0;
       document.getElementById('counter').innerText = valorAtual;
     } catch (err) {
@@ -247,37 +248,34 @@
 
   carregarContadorGlobal();
 
-  // 2. Registra o incremento e força a atualização na tela
+  // 2. Registra o incremento
   async function registrarDescarte() {
     const elCounter = document.getElementById('counter');
-    
-    // Atualização otimista: soma +1 visualmente na hora
     const valorAtual = parseInt(elCounter.innerText) || 0;
-    elCounter.innerText = valorAtual + 1;
 
     try {
-      // Dispara o incremento real na API via Cloudflare
+      // Faz o incremento real via Cloudflare Worker
       const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
       if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
       let resData = await response.json();
       if (typeof resData === 'string') resData = JSON.parse(resData);
 
-      // Garante que o valor final da API substitua o número da tela
+      // Atualiza na tela com o valor real confirmado pela API
       const valorConfirmado = resData?.data?.up_count ?? resData?.data?.value;
+      
       if (valorConfirmado !== undefined) {
         elCounter.innerText = valorConfirmado;
+      } else {
+        elCounter.innerText = valorAtual + 1;
       }
 
-      // Exibe a confirmação
       setTimeout(() => {
         alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
       }, 50);
 
     } catch (err) {
       console.error("Detalhes do erro:", err);
-      // Caso ocorra falha de rede, desfaz o +1 otimista
-      elCounter.innerText = valorAtual;
       alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
     }
   }
