@@ -247,31 +247,28 @@
 
   carregarContadorGlobal();
 
-  // 2. Registra o incremento
+  // 2. Registra o incremento e atualiza a tela SEM recarregar a página
   async function registrarDescarte() {
-  try {
-    const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
-    if (!response.ok) throw new Error("Erro na requisição ao servidor");
+    try {
+      const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
+      if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
-    let resData = await response.json();
-    if (typeof resData === 'string') resData = JSON.parse(resData);
+      let resData = await response.json();
+      if (typeof resData === 'string') resData = JSON.parse(resData);
 
-    const novoValor = resData?.data?.up_count ?? resData?.data?.value;
+      const novoValor = resData?.data?.up_count ?? resData?.data?.value;
 
-    if (novoValor !== undefined) {
-      // Atualiza o contador na tela imediatamente, sem reload
-      document.getElementById('counter').innerText = novoValor;
+      if (novoValor !== undefined) {
+        document.getElementById('counter').innerText = novoValor;
+      }
+
+      alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+
+    } catch (err) {
+      console.error("Detalhes do erro:", err);
+      alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
     }
-
-    alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
-
-    // Removido o window.location.reload()
-
-  } catch (err) {
-    console.error("Detalhes do erro:", err);
-    alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
   }
-}
 </script>
 
 </body>
