@@ -226,19 +226,21 @@
     </footer>
   </div>
 
-  <script>
-  // URL da Cloudflare Worker (sem a barra no final)
+<script>
   const WORKER_URL = 'https://floral-mode-96bb.caroline-archanjo23.workers.dev';
 
   // 1. Busca a contagem atual ao abrir a página
   async function carregarContadorGlobal() {
     try {
-      const response = await fetch(WORKER_URL);
+      // Adiciona um timestamp (?t=...) para impedir que o navegador use respostas em cache
+      const cacheBuster = `?t=${Date.now()}`;
+      const response = await fetch(`${WORKER_URL}${cacheBuster}`, {
+        cache: 'no-store'
+      });
+      
       if (!response.ok) return;
 
       let resData = await response.json();
-      
-      // Se o retorno vier como string codificada, converte para objeto
       if (typeof resData === 'string') {
         resData = JSON.parse(resData);
       }
@@ -256,34 +258,25 @@
   // 2. Registra o incremento (+1) ao clicar no botão
   async function registrarDescarte() {
     try {
-      const response = await fetch(`${WORKER_URL}/up`);
+      const response = await fetch(`${WORKER_URL}/up`, { cache: 'no-store' });
       if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
       let resData = await response.json();
-
-      // Tratamento caso a Worker devolva o JSON envelopado como texto
       if (typeof resData === 'string') {
         resData = JSON.parse(resData);
       }
 
-      console.log("JSON processado com sucesso:", resData);
-
-      // Captura o valor incrementado retornado
       const novoValor = resData?.data?.up_count ?? resData?.data?.value ?? resData?.data?.up;
 
       if (novoValor !== undefined && novoValor !== null) {
-        // 1. Atualiza o texto imediatamente na tela
-        const el = document.getElementById('counter');
-        el.innerText = novoValor;
+        document.getElementById('counter').innerText = novoValor;
         
-        // 2. Dispara o alert de confirmação
         requestAnimationFrame(() => {
           setTimeout(() => {
             alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
           }, 100);
         });
       } else {
-        // Fallback: se por algum motivo a API não mandar a contagem no retorno do /up, busca o contador atualizado
         await carregarContadorGlobal();
         setTimeout(() => {
           alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
