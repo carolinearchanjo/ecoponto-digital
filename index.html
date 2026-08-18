@@ -232,59 +232,52 @@
   // 1. Busca a contagem atual ao abrir a página
   async function carregarContadorGlobal() {
     try {
-      // Adiciona um timestamp (?t=...) para impedir que o navegador use respostas em cache
-      const cacheBuster = `?t=${Date.now()}`;
-      const response = await fetch(`${WORKER_URL}${cacheBuster}`, {
-        cache: 'no-store'
-      });
-      
+      const response = await fetch(`${WORKER_URL}?t=${Date.now()}`, { cache: 'no-store' });
       if (!response.ok) return;
 
       let resData = await response.json();
-      if (typeof resData === 'string') {
-        resData = JSON.parse(resData);
-      }
+      if (typeof resData === 'string') resData = JSON.parse(resData);
 
-      const valorAtual = resData?.data?.up_count ?? resData?.data?.value ?? resData?.data?.up ?? 0;
+      const valorAtual = resData?.data?.up_count ?? resData?.data?.value ?? 0;
       document.getElementById('counter').innerText = valorAtual;
     } catch (err) {
       console.error("Erro ao carregar o contador:", err);
     }
   }
 
-  // Executa assim que a página carrega
   carregarContadorGlobal();
 
-  // 2. Registra o incremento (+1) ao clicar no botão
+  // 2. Registra o incremento e força a atualização na tela
   async function registrarDescarte() {
+    const elCounter = document.getElementById('counter');
+    
+    // Atualização otimista: soma +1 visualmente na hora
+    const valorAtual = parseInt(elCounter.innerText) || 0;
+    elCounter.innerText = valorAtual + 1;
+
     try {
-      const response = await fetch(`${WORKER_URL}/up`, { cache: 'no-store' });
+      // Dispara o incremento real na API via Cloudflare
+      const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
       if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
       let resData = await response.json();
-      if (typeof resData === 'string') {
-        resData = JSON.parse(resData);
+      if (typeof resData === 'string') resData = JSON.parse(resData);
+
+      // Garante que o valor final da API substitua o número da tela
+      const valorConfirmado = resData?.data?.up_count ?? resData?.data?.value;
+      if (valorConfirmado !== undefined) {
+        elCounter.innerText = valorConfirmado;
       }
 
-      const novoValor = resData?.data?.up_count ?? resData?.data?.value ?? resData?.data?.up;
-
-      if (novoValor !== undefined && novoValor !== null) {
-        document.getElementById('counter').innerText = novoValor;
-        
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
-          }, 100);
-        });
-      } else {
-        await carregarContadorGlobal();
-        setTimeout(() => {
-          alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
-        }, 100);
-      }
+      // Exibe a confirmação
+      setTimeout(() => {
+        alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+      }, 50);
 
     } catch (err) {
       console.error("Detalhes do erro:", err);
+      // Caso ocorra falha de rede, desfaz o +1 otimista
+      elCounter.innerText = valorAtual;
       alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
     }
   }
