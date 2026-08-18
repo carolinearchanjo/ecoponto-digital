@@ -255,10 +255,14 @@
 
       const json = await response.json();
       
-      // Atualiza a tela com o novo valor retornado
+      // 1. Atualiza o número na tela imediatamente
       document.getElementById('counter').innerText = json.data.up_count;
       
-      alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+      // 2. Aguarda 50ms para o navegador renderizar o novo número antes de abrir o alert
+      setTimeout(() => {
+        alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
+      }, 50);
+
     } catch (err) {
       console.error("Detalhes do erro:", err);
       alert("⚠️ Erro ao conectar ao servidor. Verifique sua conexão com a internet.");
