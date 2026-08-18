@@ -249,20 +249,16 @@
 
   // 2. Registra o incremento e atualiza a tela SEM recarregar a página
   async function registrarDescarte() {
+  const counterEl = document.getElementById('counter');
+  const valorAtual = parseInt(counterEl.innerText, 10) || 0;
+
   try {
     const response = await fetch(`${WORKER_URL}/up?t=${Date.now()}`, { cache: 'no-store' });
     if (!response.ok) throw new Error("Erro na requisição ao servidor");
 
-    let resData = await response.json();
-    if (typeof resData === 'string') resData = JSON.parse(resData);
-
-    console.log("RESPOSTA DA API:", JSON.stringify(resData, null, 2)); // <-- linha temporária
-
-    const novoValor = resData?.data?.up_count ?? resData?.data?.value;
-
-    if (novoValor !== undefined) {
-      document.getElementById('counter').innerText = novoValor;
-    }
+    // Não confiamos no valor que a API devolve aqui (pode estar em buffer/desatualizado).
+    // Como a chamada deu certo, incrementamos localmente na tela.
+    counterEl.innerText = valorAtual + 1;
 
     alert("✅ Descarte registrado no banco de dados coletivo!\nObrigado por apoiar a preservação ambiental da nossa comunidade.");
 
